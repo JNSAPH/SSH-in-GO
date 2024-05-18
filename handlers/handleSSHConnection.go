@@ -52,6 +52,14 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 
 	conn.Write(SSH_MSG_KEXINIT_Server)
 
+	// Read client response
+	response := make([]byte, 4096)
+	n, err = conn.Read(response)
+	if err != nil {
+		log.Printf("Error reading client response: %v", err)
+		return
+	}
+
 	handleSSHSession(conn)
 	log.Println("=== SSH Connection Closed ===")
 }

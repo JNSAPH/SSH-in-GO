@@ -117,7 +117,6 @@ func getCommonAlgorithms(nameList []byte, supportedAlgorithms []string) []byte {
 	var supportedAlgos []string
 
 	nameListStr := string(nameList)
-
 	splitNameList := strings.Split(nameListStr, ",")
 
 	for _, algo := range splitNameList {
@@ -139,14 +138,9 @@ func getCommonAlgorithms(nameList []byte, supportedAlgorithms []string) []byte {
 	// concatenate the length prefix and the combined algorithms
 	result := append(lengthPrefixBytes, []byte(combinedAlgos)...)
 
-	fmt.Printf("Supported Algos: %v\n", result)
-
 	return result
 }
 
-/*
-Todo: the different algorithm lists are missing the uint32 length prefix
-*/
 func CreateSSHMsgKexinit(SSH_MSG_KEXINIT_Client SSHMsgKexdhInit) ([]byte, error) {
 	firstKexPacketFollows := SSH_MSG_KEXINIT_Client.first_kex_packet_follows
 
@@ -155,52 +149,50 @@ func CreateSSHMsgKexinit(SSH_MSG_KEXINIT_Client SSHMsgKexdhInit) ([]byte, error)
 
 	// add 16 bytes of random data
 	randomBytes := make([]byte, 16)
-
-	// Generate 16 random bytes
 	_, err := rand.Read(randomBytes)
 	if err != nil {
 		fmt.Println("Error generating random bytes:", err)
 		return nil, err
 	}
 
-	// Append the random bytes to SSH_MSG_KEXINIT_Server
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, randomBytes...)
-
-	// Append the random bytes to SSH_MSG_KEXINIT_Server
+	// Append the random bytes (cookie) to SSH_MSG_KEXINIT_Server
 	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, randomBytes...)
 
 	// Add kex_algorithms
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.kex_algorithms, constants.SUPPORTED_KEX_ALGORITHMS))...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.kex_algorithms, constants.SUPPORTED_KEX_ALGORITHMS)...)
 
 	// Add server_host_key_algorithms
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_host_key_algorithms, constants.SUPPORTED_SERVER_HOST_KEY_ALGORITHMS))...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_host_key_algorithms, constants.SUPPORTED_SERVER_HOST_KEY_ALGORITHMS)...)
 
 	// Add client_to_server_encryption_algorithms
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.client_to_server_encryption_algorithms, constants.SUPPORTED_CLIENT_TO_SERVER_ENCRYPTION_ALGORITHMS))...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.client_to_server_encryption_algorithms, constants.SUPPORTED_CLIENT_TO_SERVER_ENCRYPTION_ALGORITHMS)...)
 
 	// Add server_to_client_encryption_algorithms
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_to_client_encryption_algorithms, constants.SUPPORTED_SERVER_TO_CLIENT_ENCRYPTION_ALGORITHMS))...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_to_client_encryption_algorithms, constants.SUPPORTED_SERVER_TO_CLIENT_ENCRYPTION_ALGORITHMS)...)
 
 	// Add client_to_server_mac_algorithms
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.client_to_server_mac_algorithms, constants.SUPPORTED_CLIENT_TO_SERVER_MAC_ALGORITHMS))...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.client_to_server_mac_algorithms, constants.SUPPORTED_CLIENT_TO_SERVER_MAC_ALGORITHMS)...)
 
 	// Add server_to_client_mac_algorithms
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_to_client_mac_algorithms, constants.SUPPORTED_SERVER_TO_CLIENT_MAC_ALGORITHMS))...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_to_client_mac_algorithms, constants.SUPPORTED_SERVER_TO_CLIENT_MAC_ALGORITHMS)...)
 
 	// Add client_to_server_compression_algorithms
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.client_to_server_compression_algorithms, constants.SUPPORTED_CLIENT_TO_SERVER_COMPRESSION_ALGORITHMS))...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.client_to_server_compression_algorithms, constants.SUPPORTED_CLIENT_TO_SERVER_COMPRESSION_ALGORITHMS)...)
 
 	// Add server_to_client_compression_algorithms
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_to_client_compression_algorithms, constants.SUPPORTED_SERVER_TO_CLIENT_COMPRESSION_ALGORITHMS))...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_to_client_compression_algorithms, constants.SUPPORTED_SERVER_TO_CLIENT_COMPRESSION_ALGORITHMS)...)
 
-	// Add client_to_server_languages
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.client_to_server_languages, []string{}))...)
+	// Add client_to_server_languages (with length prefix 0)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte{0, 0, 0, 0}...)
 
-	// Add server_to_client_languages
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte(getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_to_client_languages, []string{}))...)
+	// Add server_to_client_languages (with length prefix 0)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte{0, 0, 0, 0}...)
 
 	// Add first_kex_packet_follows
 	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, firstKexPacketFollows)
+
+	// Add reserved (4 bytes of 0)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte{0, 0, 0, 0}...)
 
 	return SSH_MSG_KEXINIT_Server, nil
 }
