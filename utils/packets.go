@@ -6,23 +6,17 @@ import (
 	"log"
 )
 
-/*
-uint32    packet_length
-byte      padding_length
-byte[n1]  payload; n1 = packet_length - padding_length - 1
-byte[n2]  random padding; n2 = padding_length
-byte[m]   mac (Message Authentication Code - MAC); m = mac_length
-*/
 type MessagePackage struct {
 	PacketLength  uint32
 	PaddingLength uint32
-	Payload       []byte
-	RandomPadding []byte
-	MAC           []byte
+	Payload       []byte // packet_length - padding_length - 1
+	RandomPadding []byte // n2 = padding_length
+	MAC           []byte // m = mac_length
 }
 
+// ParseMessagePackage parses a raw SSH message into a MessagePackage struct.
 func ParseMessagePackage(keyExchangeMsg []byte) MessagePackage {
-	// Create empty MessagePackage
+	// Create an empty MessagePackage
 	messagePackage := MessagePackage{}
 
 	// Packet Length
@@ -48,9 +42,9 @@ func ParseMessagePackage(keyExchangeMsg []byte) MessagePackage {
 	return messagePackage
 }
 
+// CreateSSHMessage creates a properly formatted SSH message from a given payload.
 func CreateSSHMessage(payload []byte) []byte {
-	// Define the block size
-	blockSize := 8
+	const blockSize = 8
 
 	// Create initial padding of 4 bytes
 	paddingLength := 4
@@ -62,7 +56,7 @@ func CreateSSHMessage(payload []byte) []byte {
 	// Calculate initial packet length
 	packetLength := calculatePacketLength(payload, paddingLength)
 
-	// Adjust padding length to make total length a multiple of block size
+	// Adjust padding length to make total length a multiple of blockSize
 	for packetLength%blockSize != 0 {
 		paddingLength++
 		padding = make([]byte, paddingLength)
@@ -82,6 +76,7 @@ func CreateSSHMessage(payload []byte) []byte {
 	return messageToClient
 }
 
+// calculatePacketLength computes the total packet length.
 func calculatePacketLength(payload []byte, paddingLength int) int {
 	// packet_length (4 bytes) + padding_length (1 byte) + payload + padding
 	return 4 + 1 + len(payload) + paddingLength

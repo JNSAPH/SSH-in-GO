@@ -2,18 +2,17 @@ package handlers
 
 import (
 	"crypto/rsa"
-	"fmt"
+	"log"
+	"net"
+
 	"jnsaph/constants"
 	"jnsaph/keyExchange"
 	"jnsaph/utils"
-	"log"
-	"net"
 )
 
-// RFC 4253 for details: https://tools.ietf.org/html/rfc4253
+// HandleSSHConnection manages the SSH connection process.
+// For more details, see RFC 4253: https://tools.ietf.org/html/rfc4253
 func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
-	defer conn.Close()
-
 	log.Println("=== SSH Connection ===")
 	log.Printf("SSH connection established from %s", conn.RemoteAddr())
 
@@ -24,11 +23,14 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 		log.Printf("Error reading ID-String: %v", err)
 		return
 	}
-	log.Printf("ID-String from Client: %s\n", idString[:n])
+	log.Printf("ID-String from Client: %s", idString[:n])
 
 	// ID-String exchange Server -> Client
 	banner := constants.IDStringBanner
-	conn.Write([]byte(banner + "\r\n"))
+	if _, err := conn.Write([]byte(banner + "\r\n")); err != nil {
+		log.Printf("Error sending banner: %v", err)
+		return
+	}
 
 	// SSH_MSG_KEXINIT Client -> Server
 	keyExchangeMsg := make([]byte, 4096)
@@ -47,10 +49,10 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 	}
 
 	SSH_MSG_KEXINIT_Server = utils.CreateSSHMessage(SSH_MSG_KEXINIT_Server)
-	fmt.Printf("SSH_MSG_KEXINIT_Server: %v\n", SSH_MSG_KEXINIT_Server)
-	fmt.Printf("SSH_MSG_KEXINIT_Server: %s\n", SSH_MSG_KEXINIT_Server)
-
-	conn.Write(SSH_MSG_KEXINIT_Server)
+	if _, err := conn.Write(SSH_MSG_KEXINIT_Server); err != nil {
+		log.Printf("Error sending SSH_MSG_KEXINIT: %v", err)
+		return
+	}
 
 	// Read client response
 	response := make([]byte, 4096)
@@ -59,6 +61,8 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 		log.Printf("Error reading client response: %v", err)
 		return
 	}
+
+	log.Printf("Client response: %v", response[:n])
 
 	handleSSHSession(conn)
 	log.Println("=== SSH Connection Closed ===")
