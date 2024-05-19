@@ -40,7 +40,8 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 		return
 	}
 
-	SSH_MSG_KEXINIT_Client := keyExchange.ParseSSHMsgKexinit(keyExchangeMsg[:n])
+	PARSED_KEY_EXCHANGE_MSG := utils.ParseMessagePackage(keyExchangeMsg[:n])
+	SSH_MSG_KEXINIT_Client := keyExchange.ParseSSHMsgKexinit([]byte(string(PARSED_KEY_EXCHANGE_MSG.Payload) + string(PARSED_KEY_EXCHANGE_MSG.RandomPadding) + string(PARSED_KEY_EXCHANGE_MSG.MAC))) // This is stupid
 
 	// SSH_MSG_KEXINIT Server -> Client
 	SSH_MSG_KEXINIT_Server, err := keyExchange.CreateSSHMsgKexinit(SSH_MSG_KEXINIT_Client)

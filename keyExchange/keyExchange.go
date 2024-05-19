@@ -42,14 +42,10 @@ func readNameList(data []byte, index int) ([]byte, int, error) {
 }
 
 func ParseSSHMsgKexinit(packet []byte) SSHMsgKexdhInit {
-	// Skip SSH_MSG_KEXINIT byte and cookie (which should only add up to 17 bytes? Right? idk this works tho)
-	// Currently:
-	// 4 byte packet length
-	// 1 byte padding length
-	// 1 Byte is the SSH_MSG_KEXINIT byte
-	// 16 Bytes is the cookie
-	// Total 22. fuck me
-	data := packet[22:]
+	// The 17 bytes that are being skipped are:
+	// 1 byte for the message type (SSH_MSG_KEXINIT)
+	// 16 bytes for the cookie (random data)
+	data := packet[17:]
 
 	index := 0
 
