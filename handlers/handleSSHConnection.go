@@ -54,7 +54,8 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 		return
 	}
 
-	// Read client response
+	// KEY EXCHANGE
+	// Docs: RFC 4253, Section 7.1 and 7.2
 	response := make([]byte, 4096)
 	n, err = conn.Read(response)
 	if err != nil {

@@ -127,6 +127,11 @@ func getCommonAlgorithms(nameList []byte, supportedAlgorithms []string) []byte {
 		}
 	}
 
+	// Check if any common algorithms were found
+	if len(supportedAlgos) == 0 {
+		log.Fatalf("No common algorithms found! \nSupported algorithms: %v\nNameList: %s", supportedAlgorithms, nameListStr)
+	}
+
 	// combine the supported algorithms into a single string
 	combinedAlgos := strings.Join(supportedAlgos, ",")
 	lengthPrefix := uint32(len(combinedAlgos))

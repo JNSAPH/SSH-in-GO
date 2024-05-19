@@ -10,7 +10,7 @@ var SUPPORTED_KEX_ALGORITHMS = []string{
 }
 
 var SUPPORTED_SERVER_HOST_KEY_ALGORITHMS = []string{
-	"ssh-rsa",
+	"rsa-sha2-512",
 }
 
 var SUPPORTED_CLIENT_TO_SERVER_ENCRYPTION_ALGORITHMS = []string{
