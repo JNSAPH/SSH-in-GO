@@ -64,7 +64,8 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 		return
 	}
 
-	log.Printf("Client response: %v", response[:n])
+	otasdf := utils.ParseMessagePackage(response[:n])
+	log.Printf("Client response: %v", otasdf)
 
 	handleSSHSession(conn)
 	log.Println("=== SSH Connection Closed ===")

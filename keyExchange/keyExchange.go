@@ -44,8 +44,13 @@ func readNameList(data []byte, index int) ([]byte, int, error) {
 func ParseSSHMsgKexinit(packet []byte) SSHMsgKexdhInit {
 	// The 17 bytes that are being skipped are:
 	// 1 byte for the message type (SSH_MSG_KEXINIT)
-	// 16 bytes for the cookie (random data)
+	SSH_MSG_KEXINIT := packet[0]
 	data := packet[17:]
+
+	// if SSH_MSG_KEXINIT is between 20 and 29, then it is a key exchange packet
+	if SSH_MSG_KEXINIT < 20 || SSH_MSG_KEXINIT > 29 {
+		log.Fatalf("Invalid SSH_MSG_KEXINIT: %v", SSH_MSG_KEXINIT)
+	}
 
 	index := 0
 
@@ -131,7 +136,7 @@ func getCommonAlgorithms(nameList []byte, supportedAlgorithms []string) []byte {
 
 	// Check if any common algorithms were found
 	if len(supportedAlgos) == 0 {
-		log.Fatalf("No common algorithms found! \nSupported algorithms: %v\nNameList: %s", supportedAlgorithms, nameListStr)
+		log.Fatalf("No common algorithms found! Supported algorithms: %vNameList: %s", supportedAlgorithms, nameListStr)
 	}
 
 	// combine the supported algorithms into a single string
@@ -151,8 +156,8 @@ func getCommonAlgorithms(nameList []byte, supportedAlgorithms []string) []byte {
 func CreateSSHMsgKexinit(SSH_MSG_KEXINIT_Client SSHMsgKexdhInit) ([]byte, error) {
 	firstKexPacketFollows := SSH_MSG_KEXINIT_Client.first_kex_packet_follows
 
-	// first byte should be 20
-	SSH_MSG_KEXINIT_Server := []byte{20}
+	// first byte should be 0x14 (SSH_MSG_KEXINIT)
+	SSH_MSG_KEXINIT_Server := []byte{0x14}
 
 	// add 16 bytes of random data
 	randomBytes := make([]byte, 16)
@@ -190,7 +195,7 @@ func CreateSSHMsgKexinit(SSH_MSG_KEXINIT_Client SSHMsgKexdhInit) ([]byte, error)
 	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, getCommonAlgorithms(SSH_MSG_KEXINIT_Client.server_to_client_compression_algorithms, constants.SUPPORTED_SERVER_TO_CLIENT_COMPRESSION_ALGORITHMS)...)
 
 	// Add client_to_server_languages (with length prefix 0)
-	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte{0, 0, 0, 0}...)
+	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte{0, 0, 0, 0}...) // 4 bytes of 0 because its a name-list so the first 4 bytes are the length (uint32).. right?
 
 	// Add server_to_client_languages (with length prefix 0)
 	SSH_MSG_KEXINIT_Server = append(SSH_MSG_KEXINIT_Server, []byte{0, 0, 0, 0}...)
