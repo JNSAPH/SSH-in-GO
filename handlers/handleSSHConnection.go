@@ -10,8 +10,6 @@ import (
 	"jnsaph/utils"
 )
 
-// HandleSSHConnection manages the SSH connection process.
-// For more details, see RFC 4253: https://tools.ietf.org/html/rfc4253
 func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 	log.Println("=== SSH Connection ===")
 	log.Printf("SSH connection established from %s", conn.RemoteAddr())
@@ -55,7 +53,7 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 		return
 	}
 
-	// KEY EXCHANGE
+	// SSH_MSG_KEXDH
 	// Docs: RFC 4253, Section 7.1 and 7.2
 	response := make([]byte, 4096)
 	n, err = conn.Read(response)
@@ -64,8 +62,9 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 		return
 	}
 
-	otasdf := utils.ParseMessagePackage(response[:n])
-	log.Printf("Client response: %v", otasdf)
+	PARSED_SSH_MSG_KEXDH := utils.ParseMessagePackage(response[:n])
+	SSH_MSG_KEXDH := keyExchange.ParseSSHMsgKexdh(PARSED_SSH_MSG_KEXDH.Payload)
+	log.Printf("Client response: %v", SSH_MSG_KEXDH)
 
 	handleSSHSession(conn)
 	log.Println("=== SSH Connection Closed ===")

@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-type SSHMsgKexdhInit struct {
+type SSHMsgKexInitPacket struct {
 	kex_algorithms                          []byte
 	server_host_key_algorithms              []byte
 	client_to_server_encryption_algorithms  []byte
@@ -41,7 +41,7 @@ func readNameList(data []byte, index int) ([]byte, int, error) {
 	return str, index, nil
 }
 
-func ParseSSHMsgKexinit(packet []byte) SSHMsgKexdhInit {
+func ParseSSHMsgKexinit(packet []byte) SSHMsgKexInitPacket {
 	// The 17 bytes that are being skipped are:
 	// 1 byte for the message type (SSH_MSG_KEXINIT)
 	SSH_MSG_KEXINIT := packet[0]
@@ -105,7 +105,7 @@ func ParseSSHMsgKexinit(packet []byte) SSHMsgKexdhInit {
 
 	first_kex_packet_follows := data[index]
 
-	return SSHMsgKexdhInit{
+	return SSHMsgKexInitPacket{
 		kex_algorithms:                          kex_algorithms,
 		server_host_key_algorithms:              server_host_key_algorithms,
 		client_to_server_encryption_algorithms:  client_to_server_encryption_algorithms,
@@ -153,7 +153,7 @@ func getCommonAlgorithms(nameList []byte, supportedAlgorithms []string) []byte {
 	return result
 }
 
-func CreateSSHMsgKexinit(SSH_MSG_KEXINIT_Client SSHMsgKexdhInit) ([]byte, error) {
+func CreateSSHMsgKexinit(SSH_MSG_KEXINIT_Client SSHMsgKexInitPacket) ([]byte, error) {
 	firstKexPacketFollows := SSH_MSG_KEXINIT_Client.first_kex_packet_follows
 
 	// first byte should be 0x14 (SSH_MSG_KEXINIT)
