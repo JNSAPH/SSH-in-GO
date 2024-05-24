@@ -53,7 +53,7 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 		return
 	}
 
-	// SSH_MSG_KEXDH
+	// SSH_MSG_KEXDH Client -> Server
 	// Docs: RFC 4253, Section 7.1 and 7.2
 	response := make([]byte, 4096)
 	n, err = conn.Read(response)
@@ -64,7 +64,15 @@ func HandleSSHConnection(conn net.Conn, privateKey *rsa.PrivateKey) {
 
 	PARSED_SSH_MSG_KEXDH := utils.ParseMessagePackage(response[:n])
 	SSH_MSG_KEXDH := keyExchange.ParseSSHMsgKexdh(PARSED_SSH_MSG_KEXDH.Payload)
-	log.Printf("Client response: %v", SSH_MSG_KEXDH)
+
+	// SSH_MSG_KEXDH_REPLY Server -> Client
+	SSH_MSG_KEXDH_REPLY := keyExchange.CreateSSHMsgKexdhPacket(SSH_MSG_KEXDH)
+	SSH_MSG_KEXDH_REPLY = utils.CreateSSHMessage(SSH_MSG_KEXDH_REPLY)
+
+	if _, err := conn.Write(SSH_MSG_KEXDH_REPLY); err != nil {
+		log.Printf("Error sending SSH_MSG_KEXDH_REPLY: %v", err)
+		return
+	}
 
 	handleSSHSession(conn)
 	log.Println("=== SSH Connection Closed ===")
